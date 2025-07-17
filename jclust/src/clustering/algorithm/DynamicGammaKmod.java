@@ -6,7 +6,7 @@ import clustering.cluster.*;
 import clustering.dataset.Record;
 import clustering.initialization.InitializationMethod;
 
-public class Kmod extends ClusteringAlgorithm {
+public class DynamicGammaKmod extends ClusteringAlgorithm {
 	// parameters
 	protected int  numclust;
 	protected double gamma;

@@ -38,3 +38,12 @@ java -Dlog4j.configurationFile=kmod/log4j2.xml -cp "bin;lib/*" clustering.main.A
 # PYTHON boxplotting
 # install dependencies
 pip install pandas matplotlib seaborn
+
+# generate boxplots
+python boxplotter.py
+
+
+# for NMI plotting
+# install scikit-learn
+pip install scikit-learn
+python nmiplotter.py

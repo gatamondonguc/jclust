@@ -34,7 +34,7 @@ public class DynamicGammaKmodSD extends ClusteringAlgorithm {
 
 	protected void setupArguments() throws Exception {
 		super.setupArguments();
-		gamma = arguments.getReal("gamma");		
+		// gamma = arguments.getReal("gamma");   // REMOVED: dynamic gamma will be computed in initialization()
 		delta = arguments.getReal("delta");
 		numclust = arguments.getInt("numcluster");
 		maxiter = arguments.getInt("maxiter");
@@ -130,7 +130,9 @@ public class DynamicGammaKmodSD extends ClusteringAlgorithm {
             CM[i] = s;
             CMV[i] = s;
         } 
-         
+
+        // Compute gamma dynamically based on standard deviation of intra-cluster distances
+        gamma = computeGammaSD();
 	}
 	
 	protected void iteration() {
@@ -235,7 +237,6 @@ public class DynamicGammaKmodSD extends ClusteringAlgorithm {
         }
 	}
 	
-			
 	protected double dist(Record x, int l) {
 		double dSum = 0.0;		
 		for(int j=0; j<nDimension; ++j) {
@@ -258,4 +259,47 @@ public class DynamicGammaKmodSD extends ClusteringAlgorithm {
 				
 		dobj = dSum;
 	}
+
+    private double computeGammaSD() {
+        double totalSD = 0.0;
+        int countedClusters = 0;
+
+        for (int c = 0; c < numclust; c++) {
+            List<Record> members = new ArrayList<>();
+            for (int i = 0; i < nRecord; i++) {
+                if (CM[i] == c) {
+                    members.add(ds.get(i));
+                }
+            }
+            if (members.isEmpty()) continue;
+
+            double[] centroid = new double[nDimension];
+            for (Record r : members) {
+                for (int d = 0; d < nDimension; d++) {
+                    centroid[d] += r.get(d);
+                }
+            }
+            for (int d = 0; d < nDimension; d++) {
+                centroid[d] /= members.size();
+            }
+
+            List<Double> dists = new ArrayList<>();
+            for (Record r : members) {
+                double dist = 0.0;
+                for (int d = 0; d < nDimension; d++) {
+                    dist += Math.pow(r.get(d) - centroid[d], 2.0);
+                }
+                dists.add(Math.sqrt(dist));
+            }
+
+            double mean = dists.stream().mapToDouble(d -> d).average().orElse(0.0);
+            double variance = dists.stream().mapToDouble(d -> Math.pow(d - mean, 2.0)).sum() / dists.size();
+            double sd = Math.sqrt(variance);
+
+            totalSD += sd;
+            countedClusters++;
+        }
+
+        return countedClusters > 0 ? totalSD / countedClusters : 1.0;
+    }
 }

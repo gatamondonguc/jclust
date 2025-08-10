@@ -71,6 +71,13 @@ for dataset in df["DataSet"].unique():
     subset = df[df["DataSet"] == dataset]
     sns.boxplot(data=subset, x="Algorithm", y="NMI", hue="Configuration")
     plt.title(f"NMI by Algorithm and Config - {dataset}")
+    
+    # Remove legend
+    plt.legend([], [], frameon=False)
+    
+    # Rotate x-axis labels
+    plt.xticks(rotation=30, ha='right')
+    
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, f"NMI_{dataset}.png"))
     plt.close()

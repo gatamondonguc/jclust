@@ -29,7 +29,6 @@ seriatim = pd.merge(
     how="left"
 ).rename(columns={"Config": "Configuration"})
 
-
 # Debug info
 print("=== DEBUG INFO ===")
 print("Columns in seriatim:", seriatim.columns.tolist())
@@ -59,6 +58,13 @@ for dataset in seriatim["DataSet"].unique():
             hue="Configuration"
         )
         plt.title(f"{metric_label} by Algorithm and Config - {dataset}")
+        
+        # Remove legend
+        plt.legend([], [], frameon=False)
+        
+        # Rotate x-axis labels
+        plt.xticks(rotation=30, ha='right')
+        
         plt.tight_layout()
         fname = f"{metric_label}_{dataset.replace('.csv','')}.png"
         plt.savefig(os.path.join(outdir, fname))

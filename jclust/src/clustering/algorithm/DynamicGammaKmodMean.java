@@ -34,7 +34,7 @@ public class DynamicGammaKmodMean extends ClusteringAlgorithm {
 
 	protected void setupArguments() throws Exception {
 		super.setupArguments();
-		gamma = arguments.getReal("gamma");		
+		// gamma = arguments.getReal("gamma");   // REMOVED: dynamic gamma will be computed in initialization()
 		delta = arguments.getReal("delta");
 		numclust = arguments.getInt("numcluster");
 		maxiter = arguments.getInt("maxiter");
@@ -130,7 +130,9 @@ public class DynamicGammaKmodMean extends ClusteringAlgorithm {
             CM[i] = s;
             CMV[i] = s;
         } 
-         
+
+        // Compute gamma dynamically based on mean of intra-cluster distances
+        gamma = computeGammaMean();
 	}
 	
 	protected void iteration() {
@@ -235,7 +237,6 @@ public class DynamicGammaKmodMean extends ClusteringAlgorithm {
         }
 	}
 	
-			
 	protected double dist(Record x, int l) {
 		double dSum = 0.0;		
 		for(int j=0; j<nDimension; ++j) {
@@ -258,4 +259,44 @@ public class DynamicGammaKmodMean extends ClusteringAlgorithm {
 				
 		dobj = dSum;
 	}
+
+    private double computeGammaMean() {
+        double totalMean = 0.0;
+        int countedClusters = 0;
+
+        for (int c = 0; c < numclust; c++) {
+            List<Record> members = new ArrayList<>();
+            for (int i = 0; i < nRecord; i++) {
+                if (CM[i] == c) {
+                    members.add(ds.get(i));
+                }
+            }
+            if (members.isEmpty()) continue;
+
+            double[] centroid = new double[nDimension];
+            for (Record r : members) {
+                for (int d = 0; d < nDimension; d++) {
+                    centroid[d] += r.get(d);
+                }
+            }
+            for (int d = 0; d < nDimension; d++) {
+                centroid[d] /= members.size();
+            }
+
+            double sumDist = 0.0;
+            for (Record r : members) {
+                double dist = 0.0;
+                for (int d = 0; d < nDimension; d++) {
+                    dist += Math.pow(r.get(d) - centroid[d], 2.0);
+                }
+                sumDist += Math.sqrt(dist);
+            }
+
+            double meanDist = sumDist / members.size();
+            totalMean += meanDist;
+            countedClusters++;
+        }
+
+        return countedClusters > 0 ? totalMean / countedClusters : 1.0;
+    }
 }
